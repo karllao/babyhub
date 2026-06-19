@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -14,6 +14,14 @@ type Filter = "all" | "feed" | "diaper" | "pump";
 const VALID_FILTERS: Filter[] = ["all", "feed", "diaper", "pump"];
 
 export default function HistoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <HistoryPageInner />
+    </Suspense>
+  );
+}
+
+function HistoryPageInner() {
   const toast = useToast();
   const searchParams = useSearchParams();
   const initialFilter = (() => {
