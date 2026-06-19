@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import RecordCard, { RecordItem } from "@/components/RecordCard";
 import { dayjs, fmtDay } from "@/lib/time";
@@ -9,10 +11,17 @@ import clsx from "clsx";
 
 type Filter = "all" | "feed" | "diaper" | "pump";
 
+const VALID_FILTERS: Filter[] = ["all", "feed", "diaper", "pump"];
+
 export default function HistoryPage() {
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const initialFilter = (() => {
+    const t = searchParams?.get("tab");
+    return (VALID_FILTERS as string[]).includes(t || "") ? (t as Filter) : "all";
+  })();
   const [day, setDay] = useState<string>(dayjs().format("YYYY-MM-DD"));
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [items, setItems] = useState<RecordItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -135,12 +144,27 @@ export default function HistoryPage() {
       <PageHeader title="历史记录" />
       <main className="px-4 pb-6 max-w-md mx-auto">
         <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setDay(dayjs(day).subtract(1, "day").format("YYYY-MM-DD"))}
+            aria-label="前一天"
+            className="tap rounded-xl border border-[var(--border)] bg-[var(--card)] px-2 flex items-center justify-center"
+          >
+            <ChevronLeft size={20} />
+          </button>
           <input
             type="date"
             value={day}
             onChange={(e) => setDay(e.target.value)}
-            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-base tabular outline-none focus:border-brand-500"
+            className="flex-1 min-w-0 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-base tabular outline-none focus:border-brand-500"
           />
+          <button
+            onClick={() => setDay(dayjs(day).add(1, "day").format("YYYY-MM-DD"))}
+            aria-label="后一天"
+            disabled={dayjs(day).isSame(dayjs(), "day")}
+            className="tap rounded-xl border border-[var(--border)] bg-[var(--card)] px-2 flex items-center justify-center disabled:opacity-40"
+          >
+            <ChevronRight size={20} />
+          </button>
           <button
             onClick={() => setDay(dayjs().format("YYYY-MM-DD"))}
             className="tap rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 text-sm"

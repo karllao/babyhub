@@ -20,7 +20,7 @@ export default function BottomNav() {
   if (!TOP_LEVEL.has(pathname)) return null;
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 bg-[var(--card)]/95 backdrop-blur border-t border-[var(--border)]"
+      className="fixed bottom-0 inset-x-0 z-40 bg-[var(--card)] border-t border-[var(--border)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="grid grid-cols-4">
