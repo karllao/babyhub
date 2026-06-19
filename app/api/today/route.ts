@@ -39,17 +39,36 @@ export async function GET() {
     )
     .get(s, e) as { count: number; pee: number; poop: number };
 
+  const pumpAgg = db
+    .prepare(
+      `SELECT
+         COUNT(*) AS count,
+         COALESCE(SUM(amount_ml), 0) AS total_ml,
+         COALESCE(SUM(ended_at - started_at), 0) AS total_ms
+       FROM pumps WHERE started_at BETWEEN ? AND ?`
+    )
+    .get(s, e) as { count: number; total_ml: number; total_ms: number };
+
   const lastFeed = db.prepare("SELECT started_at FROM feeds ORDER BY started_at DESC LIMIT 1").get() as
     | { started_at: number }
     | undefined;
   const lastDiaper = db.prepare("SELECT happened_at FROM diapers ORDER BY happened_at DESC LIMIT 1").get() as
     | { happened_at: number }
     | undefined;
+  const lastPump = db.prepare("SELECT started_at FROM pumps ORDER BY started_at DESC LIMIT 1").get() as
+    | { started_at: number }
+    | undefined;
 
   return NextResponse.json({
     feed: feedAgg,
     diaper: diaperAgg,
+    pump: {
+      count: pumpAgg.count,
+      total_ml: pumpAgg.total_ml,
+      total_s: Math.floor(pumpAgg.total_ms / 1000),
+    },
     lastFeedAt: lastFeed?.started_at ?? null,
     lastDiaperAt: lastDiaper?.happened_at ?? null,
+    lastPumpAt: lastPump?.started_at ?? null,
   });
 }

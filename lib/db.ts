@@ -43,6 +43,16 @@ function migrate(db: Database.Database) {
       created_at  INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_diapers_happened ON diapers(happened_at DESC);
+
+    CREATE TABLE IF NOT EXISTS pumps (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      started_at  INTEGER NOT NULL,
+      ended_at    INTEGER NOT NULL,
+      amount_ml   INTEGER NOT NULL,
+      note        TEXT,
+      created_at  INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_pumps_started ON pumps(started_at DESC);
   `);
 }
 
@@ -71,6 +81,15 @@ export type DiaperRow = {
   poop: number;
   poop_amount: "small" | "medium" | "large" | null;
   happened_at: number;
+  note: string | null;
+  created_at: number;
+};
+
+export type PumpRow = {
+  id: number;
+  started_at: number;
+  ended_at: number;
+  amount_ml: number;
   note: string | null;
   created_at: number;
 };

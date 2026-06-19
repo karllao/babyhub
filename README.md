@@ -57,6 +57,16 @@ pm2 start npm --name babyhub -- start
 pm2 save
 ```
 
+更新流程
+
+```bash
+git pull
+npm install
+npm run build
+pm2 restart babyhub
+```
+
+
 家人手机连家庭 Wi-Fi 后通过服务器 IP 访问;若要外网访问推荐用 Cloudflare Tunnel / Tailscale。
 
 ## 数据备份

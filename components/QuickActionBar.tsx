@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Baby, Milk, Droplets, GlassWater } from "lucide-react";
+import { Baby, Milk, Droplets, GlassWater, Waves } from "lucide-react";
 
 const actions = [
   {
@@ -31,6 +31,13 @@ const actions = [
     icon: Droplets,
     cls: "bg-sky-500",
     emoji: "💩",
+  },
+  {
+    href: "/pump",
+    label: "吸奶",
+    icon: Waves,
+    cls: "bg-violet-500",
+    emoji: "🥤",
   },
 ];
 

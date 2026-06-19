@@ -7,7 +7,7 @@ import { dayjs, fmtDay } from "@/lib/time";
 import { useToast } from "@/components/Toast";
 import clsx from "clsx";
 
-type Filter = "all" | "feed" | "diaper";
+type Filter = "all" | "feed" | "diaper" | "pump";
 
 export default function HistoryPage() {
   const toast = useToast();
@@ -23,7 +23,7 @@ export default function HistoryPage() {
     setLoading(true);
     try {
       const all: RecordItem[] = [];
-      if (filter !== "diaper") {
+      if (filter === "all" || filter === "feed") {
         const r = await fetch(`/api/feeds?since=${since}&until=${until}&limit=500`, { cache: "no-store" });
         const j = await r.json();
         for (const f of j.items as Array<{
@@ -49,7 +49,7 @@ export default function HistoryPage() {
           });
         }
       }
-      if (filter !== "feed") {
+      if (filter === "all" || filter === "diaper") {
         const r = await fetch(`/api/diapers?since=${since}&until=${until}&limit=500`, { cache: "no-store" });
         const j = await r.json();
         for (const d of j.items as Array<{
@@ -71,6 +71,27 @@ export default function HistoryPage() {
           });
         }
       }
+      if (filter === "all" || filter === "pump") {
+        const r = await fetch(`/api/pumps?since=${since}&until=${until}&limit=500`, { cache: "no-store" });
+        const j = await r.json();
+        for (const p of j.items as Array<{
+          id: number;
+          started_at: number;
+          ended_at: number;
+          amount_ml: number;
+          note: string | null;
+        }>) {
+          all.push({
+            kind: "pump",
+            id: p.id,
+            amount_ml: p.amount_ml,
+            started_at: p.started_at,
+            ended_at: p.ended_at,
+            ts: p.started_at,
+            note: p.note,
+          });
+        }
+      }
       all.sort((a, b) => b.ts - a.ts);
       setItems(all);
     } finally {
@@ -84,7 +105,12 @@ export default function HistoryPage() {
 
   async function doDelete(item: RecordItem) {
     if (!confirm("确认删除这条记录?")) return;
-    const url = item.kind === "feed" ? `/api/feeds/${item.id}` : `/api/diapers/${item.id}`;
+    const url =
+      item.kind === "feed"
+        ? `/api/feeds/${item.id}`
+        : item.kind === "diaper"
+        ? `/api/diapers/${item.id}`
+        : `/api/pumps/${item.id}`;
     const res = await fetch(url, { method: "DELETE" });
     if (res.ok) {
       toast.push("已删除");
@@ -124,7 +150,7 @@ export default function HistoryPage() {
         </div>
 
         <div className="flex gap-2 mb-4">
-          {(["all", "feed", "diaper"] as Filter[]).map((f) => (
+          {(["all", "feed", "diaper", "pump"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -135,7 +161,7 @@ export default function HistoryPage() {
                   : "border-[var(--border)] bg-[var(--card)]"
               )}
             >
-              {f === "all" ? "全部" : f === "feed" ? "喂奶" : "尿布"}
+              {f === "all" ? "全部" : f === "feed" ? "喂奶" : f === "diaper" ? "尿布" : "吸奶"}
             </button>
           ))}
         </div>

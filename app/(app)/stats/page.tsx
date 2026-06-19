@@ -21,6 +21,9 @@ type Bucket = {
   breastMin: number;
   pee: number;
   poop: number;
+  pumpMl: number;
+  pumpMin: number;
+  pumpCount: number;
 };
 
 export default function StatsPage() {
@@ -76,6 +79,26 @@ export default function StatsPage() {
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
             <Bar dataKey="breastMin" name="亲喂分钟" fill="#ec4899" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartCard>
+
+        <ChartCard title="每日吸奶量 (ml)">
+          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
+            <Bar dataKey="pumpMl" name="吸奶量" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartCard>
+
+        <ChartCard title="每日吸奶时长 (分钟)">
+          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
+            <Bar dataKey="pumpMin" name="吸奶分钟" fill="#a78bfa" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartCard>
 

@@ -6,8 +6,10 @@ import { fmtDuration, fmtRelative } from "@/lib/time";
 type Summary = {
   feed: { count: number; bottle_ml: number; breast_s: number; bottle_count: number; breast_count: number };
   diaper: { count: number; pee: number; poop: number };
+  pump: { count: number; total_ml: number; total_s: number };
   lastFeedAt: number | null;
   lastDiaperAt: number | null;
+  lastPumpAt: number | null;
 };
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -62,6 +64,14 @@ export default function TodaySummary() {
         <Stat label="亲喂时长" value={breastMin} sub="分钟" />
         <Stat label="今日尿布" value={data.diaper.count} sub={`尿 ${data.diaper.pee} · 便 ${data.diaper.poop}`} />
       </div>
+      <div className="flex gap-2">
+        <Stat
+          label="今日吸奶"
+          value={`${data.pump.total_ml}`}
+          sub={`ml · ${data.pump.count} 次`}
+        />
+        <Stat label="吸奶时长" value={Math.round(data.pump.total_s / 60)} sub="分钟" />
+      </div>
       <div className="flex gap-2 text-sm">
         <div className="flex-1 rounded-xl bg-[var(--card)] border border-[var(--border)] px-3 py-2">
           上次喂奶:
@@ -73,6 +83,14 @@ export default function TodaySummary() {
           上次尿布:
           <span className="ml-1 text-[var(--muted)]">
             {data.lastDiaperAt ? fmtRelative(data.lastDiaperAt) : "暂无"}
+          </span>
+        </div>
+      </div>
+      <div className="flex gap-2 text-sm">
+        <div className="flex-1 rounded-xl bg-[var(--card)] border border-[var(--border)] px-3 py-2">
+          上次吸奶:
+          <span className="ml-1 text-[var(--muted)]">
+            {data.lastPumpAt ? fmtRelative(data.lastPumpAt) : "暂无"}
           </span>
         </div>
       </div>

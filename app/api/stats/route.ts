@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
     )
     .all(start, end) as { pee: number; poop: number; happened_at: number }[];
 
+  const pumpRows = db
+    .prepare(
+      `SELECT started_at, ended_at, amount_ml FROM pumps WHERE started_at BETWEEN ? AND ?`
+    )
+    .all(start, end) as { started_at: number; ended_at: number; amount_ml: number }[];
+
   // 按日聚合
   type DayBucket = {
     date: string;
@@ -39,11 +45,24 @@ export async function GET(req: NextRequest) {
     breastMin: number;
     pee: number;
     poop: number;
+    pumpMl: number;
+    pumpMin: number;
+    pumpCount: number;
   };
   const buckets: Record<string, DayBucket> = {};
   for (let i = 0; i < days; i++) {
     const d = dayjs(start).add(i, "day").format("MM-DD");
-    buckets[d] = { date: d, feedCount: 0, bottleMl: 0, breastMin: 0, pee: 0, poop: 0 };
+    buckets[d] = {
+      date: d,
+      feedCount: 0,
+      bottleMl: 0,
+      breastMin: 0,
+      pee: 0,
+      poop: 0,
+      pumpMl: 0,
+      pumpMin: 0,
+      pumpCount: 0,
+    };
   }
   for (const f of feedRows) {
     const d = dayjs(f.started_at).format("MM-DD");
@@ -57,6 +76,13 @@ export async function GET(req: NextRequest) {
     if (!buckets[d]) continue;
     if (r.pee) buckets[d].pee += 1;
     if (r.poop) buckets[d].poop += 1;
+  }
+  for (const p of pumpRows) {
+    const d = dayjs(p.started_at).format("MM-DD");
+    if (!buckets[d]) continue;
+    buckets[d].pumpMl += p.amount_ml || 0;
+    buckets[d].pumpMin += Math.round(Math.max(0, p.ended_at - p.started_at) / 60000);
+    buckets[d].pumpCount += 1;
   }
 
   return NextResponse.json({

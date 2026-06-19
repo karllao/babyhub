@@ -24,6 +24,15 @@ export type RecordItem =
       poop_amount: "small" | "medium" | "large" | null;
       ts: number;
       note: string | null;
+    }
+  | {
+      kind: "pump";
+      id: number;
+      amount_ml: number;
+      started_at: number;
+      ended_at: number;
+      ts: number;
+      note: string | null;
     };
 
 const amountText: Record<string, string> = { small: "偏少", medium: "中等", large: "偏多" };
@@ -38,7 +47,9 @@ export default function RecordCard({
   const editHref =
     item.kind === "feed"
       ? `/history/edit/feed/${item.id}`
-      : `/history/edit/diaper/${item.id}`;
+      : item.kind === "diaper"
+      ? `/history/edit/diaper/${item.id}`
+      : `/history/edit/pump/${item.id}`;
 
   let icon = "";
   let title = "";
@@ -55,10 +66,15 @@ export default function RecordCard({
       const sideText = item.side === "both" ? "左右" : item.side === "left" ? "左侧" : "右侧";
       detail = `${sideText} · ${fmtDuration(item.duration_s ?? 0)}`;
     }
-  } else {
+  } else if (item.kind === "diaper") {
     icon = item.pee && item.poop ? "💧💩" : item.poop ? "💩" : "💧";
     title = item.pee && item.poop ? "尿尿 + 便便" : item.poop ? "便便" : "尿尿";
     detail = item.poop ? `量:${amountText[item.poop_amount || "medium"]}` : "";
+  } else {
+    icon = "🥤";
+    title = "吸奶";
+    const durSec = Math.max(0, Math.floor((item.ended_at - item.started_at) / 1000));
+    detail = `${item.amount_ml} ml · ${fmtDuration(durSec)}`;
   }
 
   return (
