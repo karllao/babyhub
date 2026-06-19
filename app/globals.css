@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #fafafa;
+  --fg: #111;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b0d;
+    --fg: #f5f5f5;
+    --card: #161618;
+    --muted: #9ca3af;
+    --border: #27272a;
+  }
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  font-feature-settings: "tnum";
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 数字步进、时间显示等位宽字体 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 全局可点击区域最小高度 */
+.tap {
+  min-height: 44px;
+}
