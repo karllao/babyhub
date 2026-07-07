@@ -118,6 +118,19 @@ docker build -t babyhub:local .
 
 数据持久化在宿主机 `./data` 目录(挂载到容器 `/data`),备份该目录即可。首次访问前请务必修改 `ACCESS_CODE` 与 `SESSION_SECRET`。
 
+### 常见问题
+
+**登录成功后进不了首页 / `./data` 目录一直是空的**
+
+一般是宿主机挂载目录权限不对导致容器无法写 SQLite。容器内使用 uid/gid `1001` 运行,启动脚本已自动 `chown /data`,如仍失败请在宿主执行:
+
+```bash
+sudo chown -R 1001:1001 ./data
+docker compose restart   # 或 docker restart babyhub
+```
+
+首次成功启动后 `./data/baby.db`(以及 `baby.db-wal` / `baby.db-shm`)会出现。
+
 ## 数据备份
 
 直接备份 `data/baby.db` 文件即可,SQLite 单文件 + WAL 模式安全。
