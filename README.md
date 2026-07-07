@@ -71,7 +71,12 @@ pm2 restart babyhub
 
 ## Docker 部署
 
-镜像通过 GitHub Actions 自动构建并推送到 GitHub Container Registry(ghcr.io),支持 `linux/amd64` 与 `linux/arm64`。每次推送到 `main`/`master` 或打 `v*` tag 时都会触发构建,workflow 定义在 `.github/workflows/docker.yml`。
+镜像通过 GitHub Actions 自动构建并同时推送到 **GitHub Container Registry(ghcr.io)** 与 **Docker Hub**,支持 `linux/amd64` 与 `linux/arm64`。每次推送到 `main`/`master` 或打 `v*` tag 时都会触发构建,workflow 定义在 `.github/workflows/docker.yml`。
+
+镜像地址:
+
+- `ghcr.io/karllao/babyhub:latest`
+- `docker.io/karllao/babyhub:latest`
 
 ### 方式一:docker run
 
@@ -85,7 +90,7 @@ docker run -d \
   -e SESSION_SECRET=please-change-this-to-a-long-random-string \
   -e DB_PATH=/data/baby.db \
   -v $(pwd)/data:/data \
-  ghcr.io/karllao/babyhub:latest
+  karllao/babyhub:latest
 ```
 
 ### 方式二:docker compose

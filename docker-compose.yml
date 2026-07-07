@@ -1,6 +1,6 @@
 services:
   babyhub:
-    image: ghcr.io/karllao/babyhub:latest
+    image: karllao/babyhub:latest
     # 本地构建可改为:
     # build: .
     container_name: babyhub
