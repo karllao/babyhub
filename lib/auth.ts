@@ -63,7 +63,10 @@ export async function verify(token: string | undefined): Promise<boolean> {
   try {
     const key = await hmacKey();
     return await crypto.subtle.verify("HMAC", key, sig, encoder.encode(payload));
-  } catch {
+  } catch (e) {
+    // 唯一会在此抛出的情形是 SESSION_SECRET 缺失或过短(见 secret()),
+    // 若吞掉将导致登录后被无声地踢回登录页 —— 打日志方便排查。
+    console.error("[babyhub] auth.verify error:", (e as Error).message);
     return false;
   }
 }

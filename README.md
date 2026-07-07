@@ -120,16 +120,35 @@ docker build -t babyhub:local .
 
 ### 常见问题
 
-**登录成功后进不了首页 / `./data` 目录一直是空的**
+**登录后被踢回登录页 / `./data` 目录一直是空的**
 
-一般是宿主机挂载目录权限不对导致容器无法写 SQLite。容器内使用 uid/gid `1001` 运行,启动脚本已自动 `chown /data`,如仍失败请在宿主执行:
+容器启动时会做一次环境自检并打印,先看日志:
 
 ```bash
-sudo chown -R 1001:1001 ./data
-docker compose restart   # 或 docker restart babyhub
+docker compose logs babyhub | head -30
 ```
 
-首次成功启动后 `./data/baby.db`(以及 `baby.db-wal` / `baby.db-shm`)会出现。
+正常应看到:
+
+```
+[babyhub] runtime env check:
+  ACCESS_CODE: set (len=8)
+  SESSION_SECRET: set (len=42)
+  DB_PATH: /data/baby.db
+  ...
+```
+
+- 若 `ACCESS_CODE` 或 `SESSION_SECRET` 是 `MISSING`,说明 compose 里的 `environment:` 没生效(通常是同目录 `.env` 覆盖了 compose 的默认值,或直接 `docker run` 时忘了 `-e`)。补上后 `docker compose up -d` 即可。
+- 若日志里出现 `[babyhub] auth.verify error: SESSION_SECRET 未配置或过短`,说明 middleware 拿不到该变量,同样按上一条处理。
+- 若两者都正常但 `./data` 仍为空,通常是宿主机目录权限问题。当前镜像以 root 运行,不再有这个坑;若仍卡住可清空后重来:
+
+  ```bash
+  docker compose down
+  rm -rf ./data && mkdir ./data
+  docker compose pull && docker compose up -d
+  ```
+
+首次成功启动并登录后,`./data/baby.db`(以及 `baby.db-wal` / `baby.db-shm`)会出现。
 
 ## 数据备份
 
