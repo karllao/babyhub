@@ -69,6 +69,50 @@ pm2 restart babyhub
 
 家人手机连家庭 Wi-Fi 后通过服务器 IP 访问;若要外网访问推荐用 Cloudflare Tunnel / Tailscale。
 
+## Docker 部署
+
+镜像通过 GitHub Actions 自动构建并推送到 GitHub Container Registry(ghcr.io),支持 `linux/amd64` 与 `linux/arm64`。每次推送到 `main`/`master` 或打 `v*` tag 时都会触发构建,workflow 定义在 `.github/workflows/docker.yml`。
+
+### 方式一:docker run
+
+```bash
+mkdir -p ./data
+docker run -d \
+  --name babyhub \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e ACCESS_CODE=baby2026 \
+  -e SESSION_SECRET=please-change-this-to-a-long-random-string \
+  -e DB_PATH=/data/baby.db \
+  -v $(pwd)/data:/data \
+  ghcr.io/karllao/babyhub:latest
+```
+
+### 方式二:docker compose
+
+仓库根目录已提供 `docker-compose.yml`:
+
+```bash
+# 建议在同目录创建 .env 写入 ACCESS_CODE / SESSION_SECRET
+docker compose pull
+docker compose up -d
+```
+
+更新到最新镜像:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+### 本地自行构建
+
+```bash
+docker build -t babyhub:local .
+# 或使用 compose 中被注释掉的 build: . 段
+```
+
+数据持久化在宿主机 `./data` 目录(挂载到容器 `/data`),备份该目录即可。首次访问前请务必修改 `ACCESS_CODE` 与 `SESSION_SECRET`。
+
 ## 数据备份
 
 直接备份 `data/baby.db` 文件即可,SQLite 单文件 + WAL 模式安全。

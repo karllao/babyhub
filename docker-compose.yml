@@ -1,0 +1,15 @@
+services:
+  babyhub:
+    image: ghcr.io/karllao/babyhub:latest
+    # 本地构建可改为:
+    # build: .
+    container_name: babyhub
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      ACCESS_CODE: ${ACCESS_CODE:-baby2026}
+      SESSION_SECRET: ${SESSION_SECRET:-please-change-this-to-a-long-random-string}
+      DB_PATH: /data/baby.db
+    volumes:
+      - ./data:/data
