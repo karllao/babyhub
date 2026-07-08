@@ -18,12 +18,15 @@ RUN npm run build
 
 # ---------- runner ----------
 FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat tini
+RUN apk add --no-cache libc6-compat tini tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
+    TZ=Asia/Shanghai \
     DB_PATH=/data/baby.db
 
 # 运行时需要的文件全部拷入(注意 next.config.js 是 next start 启动时读取的)
