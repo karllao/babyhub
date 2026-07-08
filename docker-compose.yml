@@ -8,9 +8,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      ACCESS_CODE: ${ACCESS_CODE:-baby2026}
-      SESSION_SECRET: ${SESSION_SECRET:-please-change-this-to-a-long-random-string}
+      ACCESS_CODE: baby2026
+      SESSION_SECRET: please-change-this-to-a-long-random-string
       DB_PATH: /data/baby.db
-      TZ: ${TZ:-Asia/Shanghai}
+      TZ: Asia/Shanghai
     volumes:
       - ./data:/data

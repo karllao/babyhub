@@ -76,7 +76,7 @@ pm2 restart babyhub
 镜像地址:
 
 - `ghcr.io/karllao/babyhub:latest`
-- `docker.io/karllao/babyhub:latest`
+- `karllao/babyhub:latest`
 
 ### 方式一:docker run
 
@@ -89,6 +89,7 @@ docker run -d \
   -e ACCESS_CODE=baby2026 \
   -e SESSION_SECRET=please-change-this-to-a-long-random-string \
   -e DB_PATH=/data/baby.db \
+  -e TZ=Asia/Shanghai \
   -v $(pwd)/data:/data \
   karllao/babyhub:latest
 ```
@@ -118,37 +119,6 @@ docker build -t babyhub:local .
 
 数据持久化在宿主机 `./data` 目录(挂载到容器 `/data`),备份该目录即可。首次访问前请务必修改 `ACCESS_CODE` 与 `SESSION_SECRET`。
 
-### 常见问题
-
-**登录后被踢回登录页 / `./data` 目录一直是空的**
-
-容器启动时会做一次环境自检并打印,先看日志:
-
-```bash
-docker compose logs babyhub | head -30
-```
-
-正常应看到:
-
-```
-[babyhub] runtime env check:
-  ACCESS_CODE: set (len=8)
-  SESSION_SECRET: set (len=42)
-  DB_PATH: /data/baby.db
-  ...
-```
-
-- 若 `ACCESS_CODE` 或 `SESSION_SECRET` 是 `MISSING`,说明 compose 里的 `environment:` 没生效(通常是同目录 `.env` 覆盖了 compose 的默认值,或直接 `docker run` 时忘了 `-e`)。补上后 `docker compose up -d` 即可。
-- 若日志里出现 `[babyhub] auth.verify error: SESSION_SECRET 未配置或过短`,说明 middleware 拿不到该变量,同样按上一条处理。
-- 若两者都正常但 `./data` 仍为空,通常是宿主机目录权限问题。当前镜像以 root 运行,不再有这个坑;若仍卡住可清空后重来:
-
-  ```bash
-  docker compose down
-  rm -rf ./data && mkdir ./data
-  docker compose pull && docker compose up -d
-  ```
-
-首次成功启动并登录后,`./data/baby.db`(以及 `baby.db-wal` / `baby.db-shm`)会出现。
 
 ## 数据备份
 
