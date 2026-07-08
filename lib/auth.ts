@@ -33,18 +33,19 @@ function toHex(buf: ArrayBuffer): string {
   return out;
 }
 
-function fromHex(hex: string): ArrayBuffer {
-  if (hex.length % 2 !== 0) return new ArrayBuffer(0);
-  const out = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < out.length; i++) {
+function fromHex(hex: string): Uint8Array<ArrayBuffer> {
+  // 返回 Uint8Array 而非裸 ArrayBuffer:Next.js Edge runtime 的 SubtleCrypto
+  // 对 signature 参数做严格 instanceof 检查,跨 isolate 边界构造的裸 ArrayBuffer
+  // 会被拒(报 "3rd argument is not instance of ArrayBuffer, Buffer, TypedArray, or DataView"),
+  // TypedArray 则始终被识别为 BufferSource。
+  const len = hex.length % 2 === 0 ? hex.length / 2 : 0;
+  const out = new Uint8Array(new ArrayBuffer(len));
+  for (let i = 0; i < len; i++) {
     const b = parseInt(hex.substr(i * 2, 2), 16);
-    if (isNaN(b)) return new ArrayBuffer(0);
+    if (isNaN(b)) return new Uint8Array(new ArrayBuffer(0));
     out[i] = b;
   }
-  // Force a non-shared ArrayBuffer view to satisfy strict BufferSource types
-  const ab = new ArrayBuffer(out.byteLength);
-  new Uint8Array(ab).set(out);
-  return ab;
+  return out;
 }
 
 export async function sign(payload: string): Promise<string> {
