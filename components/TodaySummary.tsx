@@ -84,19 +84,6 @@ export default function TodaySummary() {
 
   return (
     <div className="space-y-3">
-      {/* 距上次喂奶 — 最高频查看，大字突出显示 */}
-      <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] px-4 py-5 text-center">
-        <div className="text-sm text-[var(--muted)] mb-2">距上次喂奶</div>
-        <div className={`text-4xl font-bold tabular leading-none ${feedColor}`}>
-          {feedElapsed != null ? fmtDuration(feedElapsed) : "暂无记录"}
-        </div>
-        {data.lastFeedAt && (
-          <div className="mt-2 text-xs text-[var(--muted)]">
-            {fmtRelative(data.lastFeedAt)}喂奶
-          </div>
-        )}
-      </div>
-
       <div className="flex gap-2">
         <Stat
           label="今日喂奶"
@@ -115,6 +102,7 @@ export default function TodaySummary() {
           onClick={() => go("diaper")}
         />
       </div>
+
       <div className="flex gap-2">
         <Stat
           label="今日吸奶"
@@ -150,6 +138,19 @@ export default function TodaySummary() {
             {data.lastPumpAt ? fmtRelative(data.lastPumpAt) : "暂无"}
           </span>
         </div>
+      </div>
+
+      {/* 距上次喂奶 — 最高频查看，大字突出显示 */}
+      <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] px-4 py-5 text-center">
+        <div className="text-sm text-[var(--muted)] mb-2">距上次喂奶</div>
+        <div className={`text-4xl font-bold tabular leading-none ${feedColor}`}>
+          {feedElapsed != null ? fmtDuration(feedElapsed) : "暂无记录"}
+        </div>
+        {data.lastFeedAt && (
+          <div className="mt-2 text-xs text-[var(--muted)]">
+            {fmtRelative(data.lastFeedAt)}喂奶
+          </div>
+        )}
       </div>
     </div>
   );
