@@ -69,8 +69,34 @@ export default function TodaySummary() {
   const breastMin = Math.round(data.feed.breast_s / 60);
   const go = (tab: StatTab) => router.push(`/history?tab=${tab}`);
 
+  // 距上次喂奶经过的秒数，用于大字展示和颜色预警
+  const feedElapsed = data.lastFeedAt
+    ? Math.floor((Date.now() - data.lastFeedAt) / 1000)
+    : null;
+  const feedColor =
+    feedElapsed == null
+      ? "text-[var(--foreground)]"
+      : feedElapsed < 5400   // < 1.5h 绿色（刚喂完，放松）
+      ? "text-green-500"
+      : feedElapsed < 9000   // < 2.5h 橙色（快到了）
+      ? "text-orange-400"
+      : "text-red-500";      // ≥ 2.5h 红色（该喂了）
+
   return (
     <div className="space-y-3">
+      {/* 距上次喂奶 — 最高频查看，大字突出显示 */}
+      <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] px-4 py-5 text-center">
+        <div className="text-sm text-[var(--muted)] mb-2">距上次喂奶</div>
+        <div className={`text-4xl font-bold tabular leading-none ${feedColor}`}>
+          {feedElapsed != null ? fmtDuration(feedElapsed) : "暂无记录"}
+        </div>
+        {data.lastFeedAt && (
+          <div className="mt-2 text-xs text-[var(--muted)]">
+            {fmtRelative(data.lastFeedAt)}喂奶
+          </div>
+        )}
+      </div>
+
       <div className="flex gap-2">
         <Stat
           label="今日喂奶"
@@ -125,11 +151,6 @@ export default function TodaySummary() {
           </span>
         </div>
       </div>
-      {data.lastFeedAt && (
-        <div className="text-center text-xs text-[var(--muted)]">
-          距上次喂奶 {fmtDuration(Math.floor((Date.now() - data.lastFeedAt) / 1000))}
-        </div>
-      )}
     </div>
   );
 }
