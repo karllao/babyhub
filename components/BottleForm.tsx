@@ -26,7 +26,7 @@ export default function BottleForm({
 }) {
   const router = useRouter();
   const toast = useToast();
-  const [content, setContent] = useState<Content>(initial?.content ?? defaultContent);
+  const content = "formula"; // 精简版只支持奶粉
   const [ml, setMl] = useState<number>(initial?.amount_ml ?? 60);
   const [at, setAt] = useState<number>(initial?.started_at ?? Date.now());
   const [note, setNote] = useState<string>(initial?.note ?? "");
@@ -63,18 +63,6 @@ export default function BottleForm({
 
   return (
     <div className="px-4 pt-2 pb-32 space-y-6 max-w-md mx-auto">
-      <section>
-        <div className="label">奶瓶内容</div>
-        <Segmented<Content>
-          size="lg"
-          value={content}
-          onChange={setContent}
-          options={[
-            { value: "formula", label: "奶粉", emoji: "🥛" },
-            { value: "breastmilk", label: "母乳", emoji: "🍼" },
-          ]}
-        />
-      </section>
 
       <section>
         <div className="label">奶量</div>

@@ -9,9 +9,9 @@ import { dayjs, fmtDay } from "@/lib/time";
 import { useToast } from "@/components/Toast";
 import clsx from "clsx";
 
-type Filter = "all" | "feed" | "diaper" | "pump";
+type Filter = "all" | "feed" | "diaper";
 
-const VALID_FILTERS: Filter[] = ["all", "feed", "diaper", "pump"];
+const VALID_FILTERS: Filter[] = ["all", "feed", "diaper"];
 
 export default function HistoryPage() {
   return (
@@ -48,22 +48,21 @@ function HistoryPageInner() {
           method: "bottle" | "breast";
           content: "formula" | "breastmilk" | null;
           amount_ml: number | null;
-          side: "left" | "right" | "both" | null;
-          duration_s: number | null;
           started_at: number;
           note: string | null;
         }>) {
-          all.push({
-            kind: "feed",
-            id: f.id,
-            method: f.method,
-            content: f.content,
-            amount_ml: f.amount_ml,
-            side: f.side,
-            duration_s: f.duration_s,
-            ts: f.started_at,
-            note: f.note,
-          });
+          // 精简版只显示奶粉瓶喂记录
+          if (f.method === "bottle" && f.content === "formula") {
+            all.push({
+              kind: "feed",
+              id: f.id,
+              method: "bottle",
+              content: "formula",
+              amount_ml: f.amount_ml,
+              ts: f.started_at,
+              note: f.note,
+            });
+          }
         }
       }
       if (filter === "all" || filter === "diaper") {
@@ -88,27 +87,6 @@ function HistoryPageInner() {
           });
         }
       }
-      if (filter === "all" || filter === "pump") {
-        const r = await fetch(`/api/pumps?since=${since}&until=${until}&limit=500`, { cache: "no-store" });
-        const j = await r.json();
-        for (const p of j.items as Array<{
-          id: number;
-          started_at: number;
-          ended_at: number;
-          amount_ml: number;
-          note: string | null;
-        }>) {
-          all.push({
-            kind: "pump",
-            id: p.id,
-            amount_ml: p.amount_ml,
-            started_at: p.started_at,
-            ended_at: p.ended_at,
-            ts: p.started_at,
-            note: p.note,
-          });
-        }
-      }
       all.sort((a, b) => b.ts - a.ts);
       setItems(all);
     } finally {
@@ -125,9 +103,7 @@ function HistoryPageInner() {
     const url =
       item.kind === "feed"
         ? `/api/feeds/${item.id}`
-        : item.kind === "diaper"
-        ? `/api/diapers/${item.id}`
-        : `/api/pumps/${item.id}`;
+        : `/api/diapers/${item.id}`;
     const res = await fetch(url, { method: "DELETE" });
     if (res.ok) {
       toast.push("已删除");
@@ -182,7 +158,7 @@ function HistoryPageInner() {
         </div>
 
         <div className="flex gap-2 mb-4">
-          {(["all", "feed", "diaper", "pump"] as Filter[]).map((f) => (
+          {(["all", "feed", "diaper"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -193,7 +169,7 @@ function HistoryPageInner() {
                   : "border-[var(--border)] bg-[var(--card)]"
               )}
             >
-              {f === "all" ? "全部" : f === "feed" ? "喂奶" : f === "diaper" ? "尿布" : "吸奶"}
+              {f === "all" ? "全部" : f === "feed" ? "喂奶" : "尿布"}
             </button>
           ))}
         </div>

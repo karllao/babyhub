@@ -88,13 +88,9 @@ export default function TodaySummary() {
         <Stat
           label="今日喂奶"
           value={data.feed.count}
-          sub={`瓶 ${data.feed.bottle_count} · 亲 ${data.feed.breast_count}`}
+          sub={`${data.feed.bottle_ml} ml`}
           onClick={() => go("feed")}
         />
-        <Stat label="瓶喂总量" value={`${data.feed.bottle_ml}`} sub="ml" onClick={() => go("feed")} />
-      </div>
-      <div className="flex gap-2">
-        <Stat label="亲喂时长" value={breastMin} sub="分钟" onClick={() => go("feed")} />
         <Stat
           label="今日尿布"
           value={data.diaper.count}
@@ -103,20 +99,6 @@ export default function TodaySummary() {
         />
       </div>
 
-      <div className="flex gap-2">
-        <Stat
-          label="今日吸奶"
-          value={`${data.pump.total_ml}`}
-          sub={`ml · ${data.pump.count} 次`}
-          onClick={() => go("pump")}
-        />
-        <Stat
-          label="吸奶时长"
-          value={Math.round(data.pump.total_s / 60)}
-          sub="分钟"
-          onClick={() => go("pump")}
-        />
-      </div>
       <div className="flex gap-2 text-sm">
         <div className="flex-1 rounded-xl bg-[var(--card)] border border-[var(--border)] px-3 py-2">
           上次喂奶:
@@ -128,14 +110,6 @@ export default function TodaySummary() {
           上次尿布:
           <span className="ml-1 text-[var(--muted)]">
             {data.lastDiaperAt ? fmtRelative(data.lastDiaperAt) : "暂无"}
-          </span>
-        </div>
-      </div>
-      <div className="flex gap-2 text-sm">
-        <div className="flex-1 rounded-xl bg-[var(--card)] border border-[var(--border)] px-3 py-2">
-          上次吸奶:
-          <span className="ml-1 text-[var(--muted)]">
-            {data.lastPumpAt ? fmtRelative(data.lastPumpAt) : "暂无"}
           </span>
         </div>
       </div>

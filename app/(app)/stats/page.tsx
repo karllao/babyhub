@@ -62,13 +62,23 @@ export default function StatsPage() {
 
         {loading && <div className="text-center text-[var(--muted)] text-sm py-4">加载中…</div>}
 
-        <ChartCard title="每日瓶喂总量 (ml)">
+        <ChartCard title="每日喂奶次数">
           <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="bottleMl" name="瓶喂量" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="feedCount" name="喂奶次数" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartCard>
+
+        <ChartCard title="每日喂奶总量 (ml)">
+          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
+            <Bar dataKey="bottleMl" name="喂奶量" fill="#fbbf24" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartCard>
 
@@ -81,36 +91,6 @@ export default function StatsPage() {
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Bar dataKey="pee" name="尿尿" stackId="d" fill="#38bdf8" />
             <Bar dataKey="poop" name="便便" stackId="d" fill="#a16207" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartCard>
-
-        <ChartCard title="每日吸奶量 (ml)">
-          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="pumpMl" name="吸奶量" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartCard>
-
-        <ChartCard title="每日吸奶时长 (分钟)">
-          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="pumpMin" name="吸奶分钟" fill="#a78bfa" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartCard>
-
-        <ChartCard title="每日亲喂时长 (分钟)">
-          <BarChart data={buckets} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="breastMin" name="亲喂分钟" fill="#ec4899" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartCard>
       </main>

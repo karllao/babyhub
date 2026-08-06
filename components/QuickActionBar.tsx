@@ -12,32 +12,11 @@ const actions = [
     emoji: "🥛",
   },
   {
-    href: "/feed?type=bottle&content=breastmilk",
-    label: "瓶喂母乳",
-    icon: Milk,
-    cls: "bg-rose-500",
-    emoji: "🍼",
-  },
-  {
-    href: "/feed?type=breast",
-    label: "亲喂",
-    icon: Baby,
-    cls: "bg-pink-500",
-    emoji: "🤱",
-  },
-  {
     href: "/diaper",
     label: "换尿布",
     icon: Droplets,
     cls: "bg-sky-500",
     emoji: "💩",
-  },
-  {
-    href: "/pump",
-    label: "吸奶",
-    icon: Waves,
-    cls: "bg-violet-500",
-    emoji: "🥤",
   },
 ];
 

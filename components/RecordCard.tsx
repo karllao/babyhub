@@ -8,11 +8,9 @@ export type RecordItem =
   | {
       kind: "feed";
       id: number;
-      method: "bottle" | "breast";
-      content: "formula" | "breastmilk" | null;
+      method: "bottle";
+      content: "formula";
       amount_ml: number | null;
-      side: "left" | "right" | "both" | null;
-      duration_s: number | null;
       ts: number;
       note: string | null;
     }
@@ -22,15 +20,6 @@ export type RecordItem =
       pee: boolean;
       poop: boolean;
       poop_amount: "small" | "medium" | "large" | null;
-      ts: number;
-      note: string | null;
-    }
-  | {
-      kind: "pump";
-      id: number;
-      amount_ml: number;
-      started_at: number;
-      ended_at: number;
       ts: number;
       note: string | null;
     };
@@ -47,34 +36,20 @@ export default function RecordCard({
   const editHref =
     item.kind === "feed"
       ? `/history/edit/feed/${item.id}`
-      : item.kind === "diaper"
-      ? `/history/edit/diaper/${item.id}`
-      : `/history/edit/pump/${item.id}`;
+      : `/history/edit/diaper/${item.id}`;
 
   let icon = "";
   let title = "";
   let detail = "";
 
   if (item.kind === "feed") {
-    if (item.method === "bottle") {
-      icon = item.content === "formula" ? "🥛" : "🍼";
-      title = item.content === "formula" ? "瓶喂奶粉" : "瓶喂母乳";
-      detail = `${item.amount_ml ?? 0} ml`;
-    } else {
-      icon = "🤱";
-      title = "亲喂";
-      const sideText = item.side === "both" ? "左右" : item.side === "left" ? "左侧" : "右侧";
-      detail = `${sideText} · ${fmtDuration(item.duration_s ?? 0)}`;
-    }
-  } else if (item.kind === "diaper") {
+    icon = "🥛";
+    title = "瓶喂奶粉";
+    detail = `${item.amount_ml ?? 0} ml`;
+  } else {
     icon = item.pee && item.poop ? "💧💩" : item.poop ? "💩" : "💧";
     title = item.pee && item.poop ? "尿尿 + 便便" : item.poop ? "便便" : "尿尿";
     detail = item.poop ? `量:${amountText[item.poop_amount || "medium"]}` : "";
-  } else {
-    icon = "🥤";
-    title = "吸奶";
-    const durSec = Math.max(0, Math.floor((item.ended_at - item.started_at) / 1000));
-    detail = `${item.amount_ml} ml · ${fmtDuration(durSec)}`;
   }
 
   return (
