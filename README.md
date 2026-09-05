@@ -119,6 +119,22 @@ docker build -t babyhub:local .
 
 数据持久化在宿主机 `./data` 目录(挂载到容器 `/data`),备份该目录即可。首次访问前请务必修改 `ACCESS_CODE` 与 `SESSION_SECRET`。
 
+### iOS 推送通知
+
+推送需要 iOS 16.4+、HTTPS，并且用户需在 Safari 中将本站“添加到主屏幕”后，在“设置”页面点击开启通知。生成 VAPID 密钥：
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+将公钥、私钥和邮箱配置为 `VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT`，并设置 `CRON_SECRET`。通知调度接口为 `POST /api/notifications/run`，建议在家庭服务器上每分钟执行一次：
+
+```cron
+* * * * * curl -s -X POST -H 'x-cron-secret: your-secret' http://127.0.0.1:3000/api/notifications/run
+```
+
+该任务会发送到期的“两小时喂奶提醒”和每天 23:30 的统计提醒。
+
 
 ## 数据备份
 

@@ -2,9 +2,25 @@
 
 import PageHeader from "@/components/PageHeader";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const [status, setStatus] = useState("");
+
+  async function enableNotifications() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setStatus("此设备或浏览器不支持推送");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return setStatus("通知权限未开启");
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    const cfg = await fetch("/api/notifications/config").then((r) => r.json());
+    if (!cfg.publicKey) return setStatus("服务器尚未配置 VAPID 密钥");
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(atob(cfg.publicKey.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)) });
+    await fetch("/api/notifications/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sub) });
+    setStatus("通知已开启");
+  }
+
+  async function testNotification() { await fetch("/api/notifications/test", { method: "POST" }); await fetch("/api/notifications/run", { method: "POST" }); setStatus("测试通知已发送"); }
 
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -23,6 +39,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] divide-y divide-[var(--border)]">
+          <button onClick={enableNotifications} className="tap w-full text-left px-4 py-3">开启 iOS 推送通知</button>
+          <button onClick={testNotification} className="tap w-full text-left px-4 py-3">发送测试通知</button>
           <button
             onClick={logout}
             className="tap w-full text-left px-4 py-3 text-red-500"
@@ -30,6 +48,7 @@ export default function SettingsPage() {
             退出登录
           </button>
         </div>
+        {status && <div className="text-sm text-[var(--muted)] text-center">{status}</div>}
 
         <div className="text-xs text-[var(--muted)] text-center pt-4">
           v0.1 · 移动端 PWA · 本地存储

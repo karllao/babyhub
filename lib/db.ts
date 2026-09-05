@@ -53,6 +53,29 @@ function migrate(db: Database.Database) {
       created_at  INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_pumps_started ON pumps(started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      endpoint TEXT NOT NULL UNIQUE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      last_seen_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS notification_jobs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL CHECK(type IN ('feed_reminder','daily_summary')),
+      scheduled_at INTEGER NOT NULL,
+      dedupe_key TEXT NOT NULL UNIQUE,
+      payload TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','sent','cancelled','failed')),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      sent_at INTEGER,
+      error TEXT,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_notification_jobs_due ON notification_jobs(status, scheduled_at);
   `);
 }
 
