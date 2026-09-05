@@ -31,6 +31,19 @@ export function enqueueJob(type: "feed_reminder" | "daily_summary", scheduledAt:
     .run(type, scheduledAt, dedupeKey, JSON.stringify(payload), Date.now());
 }
 
+/** 根据当前最新喂奶记录重建唯一的两小时提醒。 */
+export function rescheduleLatestFeedReminder() {
+  const db = getDb();
+  db.prepare("UPDATE notification_jobs SET status='cancelled' WHERE type='feed_reminder' AND status='pending'").run();
+  const latest = db.prepare("SELECT id, started_at FROM feeds ORDER BY started_at DESC, id DESC LIMIT 1").get() as
+    | { id: number; started_at: number }
+    | undefined;
+  if (!latest) return;
+  enqueueJob("feed_reminder", latest.started_at + 2 * 60 * 60 * 1000, `feed-reminder-${latest.id}`, {
+    title: "宝宝喂奶提醒", body: "距离上次喝奶已满 2 小时，可以关注宝宝是否需要进食。", url: "/", tag: "feed-reminder",
+  });
+}
+
 export async function sendDueNotifications(now = Date.now()) {
   if (!setup()) return { sent: 0, skipped: true };
   const db = getDb();
@@ -41,10 +54,13 @@ export async function sendDueNotifications(now = Date.now()) {
     const payload = JSON.parse(job.payload) as PushPayload;
     if (job.type === "daily_summary") {
       const d = dayjs(job.scheduled_at);
-      const stat = db.prepare(`SELECT COUNT(*) AS count, COALESCE(SUM(CASE WHEN method='bottle' THEN amount_ml ELSE 0 END),0) AS ml,
-        COALESCE(SUM(CASE WHEN method='breast' THEN duration_s ELSE 0 END),0) AS breast_s FROM feeds WHERE started_at BETWEEN ? AND ?`)
-        .get(d.subtract(1, "day").hour(0).minute(0).second(0).millisecond(0).valueOf(), d.subtract(1, "day").endOf("day").valueOf()) as any;
-      payload.body = `今日喂奶 ${stat.count} 次，瓶喂 ${stat.ml} ml，亲喂 ${Math.floor(stat.breast_s / 60)} 分钟。`;
+      const start = d.startOf("day").valueOf();
+      const end = d.endOf("day").valueOf();
+      const feedStat = db.prepare(`SELECT COUNT(*) AS count,
+        COALESCE(SUM(CASE WHEN method='bottle' THEN amount_ml ELSE 0 END),0) AS ml
+        FROM feeds WHERE started_at BETWEEN ? AND ?`).get(start, end) as any;
+      const diaperStat = db.prepare("SELECT COUNT(*) AS count FROM diapers WHERE happened_at BETWEEN ? AND ?").get(start, end) as any;
+      payload.body = `今日喂奶 ${feedStat.count} 次，瓶喂 ${feedStat.ml} ml，尿布 ${diaperStat.count} 次。`;
     }
     let delivered = false;
     for (const sub of subs) {
@@ -70,9 +86,10 @@ export function ensureDailySummaryJob(now = Date.now()) {
   const db = getDb();
   const start = current.startOf("day").valueOf();
   const end = current.endOf("day").valueOf();
-  const stat = db.prepare(`SELECT COUNT(*) AS count, COALESCE(SUM(CASE WHEN method='bottle' THEN amount_ml ELSE 0 END),0) AS ml,
-    COALESCE(SUM(CASE WHEN method='breast' THEN duration_s ELSE 0 END),0) AS breast_s FROM feeds WHERE started_at BETWEEN ? AND ?`).get(start, end) as any;
+  const stat = db.prepare(`SELECT COUNT(*) AS count, COALESCE(SUM(CASE WHEN method='bottle' THEN amount_ml ELSE 0 END),0) AS ml
+    FROM feeds WHERE started_at BETWEEN ? AND ?`).get(start, end) as any;
+  const diaperStat = db.prepare("SELECT COUNT(*) AS count FROM diapers WHERE happened_at BETWEEN ? AND ?").get(start, end) as any;
   enqueueJob("daily_summary", target.valueOf(), `daily-summary-${dateKey}`, {
-    title: "今日喂养统计", body: `今日喂奶 ${stat.count} 次，瓶喂 ${stat.ml} ml，亲喂 ${Math.floor(stat.breast_s / 60)} 分钟。`, url: "/stats", tag: "daily-summary",
+    title: "今日喂养统计", body: `今日喂奶 ${stat.count} 次，瓶喂 ${stat.ml} ml，尿布 ${diaperStat.count} 次。`, url: "/stats", tag: "daily-summary",
   });
 }

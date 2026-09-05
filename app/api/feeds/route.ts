@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, FeedRow } from "@/lib/db";
-import { enqueueJob } from "@/lib/notifications";
+import { rescheduleLatestFeedReminder } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,11 +76,6 @@ export async function POST(req: NextRequest) {
     v.note?.trim() || null,
     Date.now()
   );
-  // 新记录会成为最新一次喂奶，之前尚未发送的提醒全部失效。
-  db.prepare("UPDATE notification_jobs SET status='cancelled' WHERE type='feed_reminder' AND status='pending'").run();
-  const reminderAt = v.started_at + 2 * 60 * 60 * 1000;
-  enqueueJob("feed_reminder", reminderAt, `feed-reminder-${info.lastInsertRowid}`, {
-    title: "宝宝喂奶提醒", body: "距离上次喝奶已满 2 小时，可以关注宝宝是否需要进食。", url: "/", tag: "feed-reminder",
-  });
+  rescheduleLatestFeedReminder();
   return NextResponse.json({ id: info.lastInsertRowid });
 }

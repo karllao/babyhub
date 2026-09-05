@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, FeedRow } from "@/lib/db";
+import { rescheduleLatestFeedReminder } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -40,10 +41,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!fields.length) return NextResponse.json({ ok: true });
   args.push(Number(params.id));
   getDb().prepare(`UPDATE feeds SET ${fields.join(", ")} WHERE id = ?`).run(...args);
+  rescheduleLatestFeedReminder();
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   getDb().prepare("DELETE FROM feeds WHERE id = ?").run(Number(params.id));
+  rescheduleLatestFeedReminder();
   return NextResponse.json({ ok: true });
 }
