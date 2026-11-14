@@ -1,6 +1,7 @@
 import webpush from "web-push";
 import { getDb } from "@/lib/db";
 import { dayjs } from "@/lib/time";
+import { getNotificationSettings, NotificationSettings } from "@/lib/notification-settings";
 
 export type PushPayload = { title: string; body: string; url?: string; tag?: string };
 
@@ -31,7 +32,23 @@ export function enqueueJob(type: "feed_reminder" | "daily_summary", scheduledAt:
     .run(type, scheduledAt, dedupeKey, JSON.stringify(payload), Date.now());
 }
 
-/** 根据当前最新喂奶记录重建唯一的两小时提醒。 */
+function feedReminderPayload(hours: number): PushPayload {
+  return {
+    title: "宝宝喂奶提醒", body: `距离上次喝奶已满 ${hours} 小时，可以关注宝宝是否需要进食。`, url: "/", tag: "feed-reminder",
+  };
+}
+
+/** 更新待发送提醒，也用于将旧版本的两小时提醒迁移到新设置。 */
+function refreshPendingFeedReminders() {
+  const { feedReminderHours } = getNotificationSettings();
+  getDb().prepare(`UPDATE notification_jobs SET
+    scheduled_at=(SELECT started_at FROM feeds WHERE 'feed-reminder-' || id=dedupe_key) + ?, payload=?
+    WHERE type='feed_reminder' AND status='pending'
+    AND EXISTS(SELECT 1 FROM feeds WHERE 'feed-reminder-' || id=dedupe_key)`)
+    .run(feedReminderHours * 60 * 60 * 1000, JSON.stringify(feedReminderPayload(feedReminderHours)));
+}
+
+/** 根据当前最新喂奶记录重建唯一的喂奶提醒。 */
 export function rescheduleLatestFeedReminder() {
   const db = getDb();
   db.prepare("UPDATE notification_jobs SET status='cancelled' WHERE type='feed_reminder' AND status='pending'").run();
@@ -39,12 +56,13 @@ export function rescheduleLatestFeedReminder() {
     | { id: number; started_at: number }
     | undefined;
   if (!latest) return;
-  enqueueJob("feed_reminder", latest.started_at + 2 * 60 * 60 * 1000, `feed-reminder-${latest.id}`, {
-    title: "宝宝喂奶提醒", body: "距离上次喝奶已满 2 小时，可以关注宝宝是否需要进食。", url: "/", tag: "feed-reminder",
-  });
+  const { feedReminderHours } = getNotificationSettings();
+  enqueueJob("feed_reminder", latest.started_at + feedReminderHours * 60 * 60 * 1000,
+    `feed-reminder-${latest.id}`, feedReminderPayload(feedReminderHours));
 }
 
 export async function sendDueNotifications(now = Date.now()) {
+  refreshPendingFeedReminders();
   if (!setup()) return { sent: 0, skipped: true };
   const db = getDb();
   const jobs = db.prepare("SELECT * FROM notification_jobs WHERE status='pending' AND scheduled_at<=? ORDER BY scheduled_at LIMIT 100").all(now) as any[];
@@ -80,16 +98,32 @@ export async function sendDueNotifications(now = Date.now()) {
 
 export function ensureDailySummaryJob(now = Date.now()) {
   const current = dayjs(now);
-  let target = current.hour(23).minute(30).second(0).millisecond(0);
-  if (target.valueOf() <= now) target = target.add(1, "day");
-  const dateKey = target.format("YYYY-MM-DD");
+  const { dailySummaryTime } = getNotificationSettings();
+  const [hour, minute] = dailySummaryTime.split(":").map(Number);
   const db = getDb();
-  const start = current.startOf("day").valueOf();
-  const end = current.endOf("day").valueOf();
-  const stat = db.prepare(`SELECT COUNT(*) AS count, COALESCE(SUM(CASE WHEN method='bottle' THEN amount_ml ELSE 0 END),0) AS ml
-    FROM feeds WHERE started_at BETWEEN ? AND ?`).get(start, end) as any;
-  const diaperStat = db.prepare("SELECT COUNT(*) AS count FROM diapers WHERE happened_at BETWEEN ? AND ?").get(start, end) as any;
-  enqueueJob("daily_summary", target.valueOf(), `daily-summary-${dateKey}`, {
-    title: "今日喂养统计", body: `今日喂奶 ${stat.count} 次，瓶喂 ${stat.ml} ml，尿布 ${diaperStat.count} 次。`, url: "/stats", tag: "daily-summary",
-  });
+  // 同步已有的待发送任务；已发送任务保持原状态，避免修改时间后重复推送。
+  const pending = db.prepare("SELECT id, scheduled_at FROM notification_jobs WHERE type='daily_summary' AND status='pending'").all() as { id: number; scheduled_at: number }[];
+  for (const job of pending) {
+    const target = dayjs(job.scheduled_at).hour(hour).minute(minute).second(0).millisecond(0);
+    db.prepare("UPDATE notification_jobs SET scheduled_at=? WHERE id=?").run(target.valueOf(), job.id);
+  }
+  for (const day of [current, current.add(1, "day")]) {
+    const target = day.hour(hour).minute(minute).second(0).millisecond(0);
+    // 保留今天的任务，即使 cron 在目标分钟之后才执行，也不会漏掉统计。
+    db.prepare(`INSERT INTO notification_jobs(type,scheduled_at,dedupe_key,payload,created_at)
+      VALUES('daily_summary',?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING`)
+      .run(target.valueOf(), `daily-summary-${target.format("YYYY-MM-DD")}`, JSON.stringify({
+        title: "今日喂养统计", body: "", url: "/stats", tag: "daily-summary",
+      }), now);
+  }
+}
+
+export function saveNotificationSettings(settings: NotificationSettings) {
+  const db = getDb();
+  db.transaction(() => {
+    db.prepare("UPDATE notification_settings SET feed_reminder_hours=?, daily_summary_time=? WHERE id=1")
+      .run(settings.feedReminderHours, settings.dailySummaryTime);
+    refreshPendingFeedReminders();
+    ensureDailySummaryJob();
+  })();
 }

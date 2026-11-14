@@ -76,6 +76,12 @@ function migrate(db: Database.Database) {
       created_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_notification_jobs_due ON notification_jobs(status, scheduled_at);
+    CREATE TABLE IF NOT EXISTS notification_settings (
+      id INTEGER PRIMARY KEY CHECK(id = 1),
+      feed_reminder_hours REAL NOT NULL DEFAULT 3,
+      daily_summary_time TEXT NOT NULL DEFAULT '23:55'
+    );
+    INSERT OR IGNORE INTO notification_settings(id) VALUES(1);
   `);
 }
 
